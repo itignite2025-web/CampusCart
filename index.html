@@ -1,0 +1,1480 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<!-- PHOTO_SWAP_MARKER_V2: karaage_card->ebi_file / ebi_card->kara_file -->
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Campus Cart</title>
+
+  
+  <link rel="icon" type="image/png"
+        href="/static/img/campuscart.png" />
+
+  <style>
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",
+                   "Helvetica Neue",Arial,"Noto Sans JP",sans-serif;
+      background: #f0f4fb;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    .phone-shell {
+      background: #d5e9ff;
+      width: 360px;
+      max-width: 100%;
+      height: 640px;
+      border-radius: 32px;
+      border: 2px solid #4a7bbf;
+      box-shadow: 0 10px 25px rgba(0,0,0,.2);
+      overflow: hidden;
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    .app-header {
+      background: #7fb6ff;
+      height: 80px;
+      padding: 18px 18px 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 2px solid #4a7bbf;
+    }
+
+    .search-wrapper {
+      position: relative;
+      flex: 1;
+      margin-right: 12px;
+    }
+
+    .search-input {
+      width: 100%;
+      border-radius: 6px;
+      border: none;
+      padding: 6px 30px 6px 10px;
+      font-size: 12px;
+      outline: none;
+      background: #e7f3ff;
+    }
+    .search-input.disabled {
+      opacity: .5;
+      pointer-events: none;
+    }
+
+    .search-icon {
+      position: absolute;
+      right: 8px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 12px;
+      opacity: .8;
+    }
+
+    .menu-icon {
+      width: 32px;
+      height: 20px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      cursor: pointer;
+    }
+    .menu-icon span {
+      display: block;
+      height: 3px;
+      border-radius: 3px;
+      background: #fff;
+    }
+    .menu-icon.disabled {
+      opacity: .5;
+      pointer-events: none;
+    }
+
+    .app-main {
+      padding: 32px 24px;
+      text-align: center;
+      height: calc(640px - 80px);
+      overflow-y: auto;
+      overflow-x: hidden;
+      position: relative;
+      scrollbar-gutter: stable;
+      overflow-x: hidden !important;
+    }
+
+    /* スクロールバー（商品一覧など） */
+    .app-main {
+      scrollbar-width: thin; /* Firefox */
+      scrollbar-color: rgba(0,0,0,0.35) transparent;
+    }
+    .app-main::-webkit-scrollbar {
+      width: 10px;
+    }
+    .app-main::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    .app-main::-webkit-scrollbar-thumb {
+      background: rgba(0,0,0,0.35);
+      border-radius: 10px;
+    }
+
+
+    .app-main.no-scroll {
+      overflow-y: hidden;
+      /* HOME画面ではスクロールバー自体を非表示にする */
+      scrollbar-width: none;           /* Firefox */
+    }
+    .app-main.no-scroll::-webkit-scrollbar {
+      width: 0;                        /* Chrome, Edge, Safari */
+      height: 0;
+    }
+
+    .screen { display:none; overflow-x:hidden; }
+    .screen.active { display:block; }
+
+    .icon-placeholder {
+      width: 70%;
+      max-width: 220px;
+      aspect-ratio: 4/3;
+      margin: 0 auto 24px;
+      border: none;
+      border-radius: 8px;
+      background: transparent;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+    }
+    .icon-placeholder img {
+      max-width: 90%;
+      max-height: 90%;
+      object-fit: contain;
+      display:block;
+    }
+
+    .app-title {
+      margin: 0 0 16px;
+      font-size: 26px;
+      font-weight: 700;
+    }
+
+    .catchcopy {
+      margin: 0 0 32px;
+      font-size: 16px;
+      line-height: 1.6;
+    }
+
+    .oval-btn {
+      display:inline-block;
+      width:80%;
+      max-width:260px;
+      padding:14px 20px;
+      border:none;
+      border-radius:999px;
+      background: radial-gradient(circle at 30% 30%,#aee0ff,#3389d8);
+      box-shadow:0 6px 0 rgba(0,0,0,.25);
+      font-size:16px;
+      font-weight:600;
+      color:#042645;
+      cursor:pointer;
+      text-decoration:none;
+    }
+    .oval-btn:active {
+      transform: translateY(2px);
+      box-shadow:0 4px 0 rgba(0,0,0,.2);
+    }
+
+    .rect-btn {
+      display:inline-block;
+      padding:10px 24px;
+      border-radius:4px;
+      background:#e5e5e5;
+      border:1px solid #444;
+      font-weight:600;
+      cursor:pointer;
+      text-decoration:none;
+      color:#d90000;
+    }
+
+    .section-title {
+      font-size:20px;
+      margin-bottom:8px;
+    }
+
+    .border-box {
+      border:2px solid #4a7bbf;
+      border-radius:4px;
+      background:rgba(255,255,255,.4);
+      padding:20px;
+      text-align:left;
+    }
+
+    /* メニューオーバーレイ */
+    .nav-overlay {
+      position:absolute;
+      inset:0;
+      background:rgba(213,233,255,.98);
+      display:none;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      z-index:10;
+    }
+    .nav-overlay.open { display:flex; }
+
+    .nav-close {
+      position:absolute;
+      top:20px;
+      right:20px;
+      font-size:28px;
+      cursor:pointer;
+    }
+
+    .nav-overlay .oval-btn {
+      margin:10px 0;
+      width:70%;
+      text-align:center;
+    }
+    .nav-link.disabled {
+      opacity:.5;
+      cursor:default;
+    }
+
+    /* 学年クラス選択 */
+    .grade-row {
+      display:flex;
+      gap:8px;
+      margin-bottom:12px;
+    }
+    .grade-select {
+      flex:1;
+      padding:6px;
+      border-radius:4px;
+      border:1px solid #9bb4d5;
+      background:#f7fbff;
+    }
+
+    .input-line {
+      width:100%;
+      padding:8px;
+      margin-bottom:16px;
+      border-radius:4px;
+      border:1px solid #9bb4d5;
+      background:#f7fbff;
+    }
+
+    /* 商品一覧 */
+#products {
+  overflow-x: hidden;
+  padding-bottom: 24px;
+}
+
+    .product-grid {
+      display:grid;
+      grid-template-columns:repeat(2,1fr);
+      gap:16px 18px;
+      justify-items:center;
+      margin-top: 18px;
+    }
+
+    .product-card {
+      width:120px;
+      text-align:center;
+      position:relative;
+    }
+
+    .badge {
+      position:absolute;
+      top: 6px;
+      left: 6px;
+      background:#ff2b2b;
+      color:#fff;
+      font-size:10px;
+      padding:4px 6px;
+      transform:none;
+      border-radius: 8px;
+      font-weight:700;
+    }
+
+    .product-img {
+      width:100%;
+      height:86px;
+      background:#f5f5f5;
+      border-radius:10px;
+      border:1px solid rgba(0,0,0,.25);
+      margin-bottom:6px;
+      overflow:hidden;
+    }
+    .product-img img{
+      width:100%;
+      height:100%;
+      object-fit:cover;
+      display:block;
+    }
+.price {
+      font-size:12px;
+      color:#555;
+      margin-bottom:2px;
+    }
+
+    .qty-control {
+      display:flex;
+      justify-content:center;
+      margin-top:4px;
+    }
+    .qty-control button {
+      width:30px;
+      border:1px solid #666;
+      background:#fff;
+      cursor:pointer;
+    }
+    .qty-control span {
+      width:32px;
+      border-top:1px solid #666;
+      border-bottom:1px solid #666;
+      text-align:center;
+    }
+
+
+    /* チェック式（お弁当） */
+    .select-control{
+      display:flex;
+      justify-content:center;
+      margin-top:8px;
+    }
+    .check-wrap{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      font-size:14px;
+      user-select:none;
+    }
+    .check-wrap input{
+      width:18px;
+      height:18px;
+      cursor:pointer;
+    }
+
+    
+    .check-wrap span{ display:none; }
+    .check-wrap{ justify-content:center; }
+/* 注文キャンセル */
+    .order-actions{
+      margin-top:10px;
+      display:flex;
+      justify-content:flex-end;
+      gap:8px;
+      align-items:center;
+    }
+    .cancel-order{
+      border:1px solid #666;
+      background:#fff;
+      padding:6px 10px;
+      border-radius:6px;
+      cursor:pointer;
+      font-size:12px;
+    }
+    .canceled-label{
+      font-size:12px;
+      color:#444;
+    }
+
+    /* 商品一覧：価格＋カートのヘッダー */
+
+    .products-topbar{
+      /* 固定（sticky）をやめて、商品カードと重ならないようにする */
+      position: relative;
+      z-index: 2;
+
+      /* app-main の左右padding(24px)をそのまま使う（見切れ防止） */
+      margin: 0 0 14px;
+      padding: 10px 0 12px;
+
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+    }
+    /* 背景だけを左右いっぱいに伸ばす（文字はpadding内なので見切れない） */
+    .products-topbar::before{
+      content:"";
+      position:absolute;
+      left:-24px;
+      right:-24px;
+      top:0;
+      bottom:0;
+      background: #d5e9ff;
+      border-bottom:2px solid #4a7bbf;
+      z-index:-1;
+    }
+.products-topbar-row1{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+    }
+    .products-title{
+      font-size:16px;
+      font-weight:800;
+      line-height:1.2;
+    }
+    .products-prices{
+      font-size:13px;
+      line-height:1.35;
+      text-align:left;
+      white-space: normal;
+      word-break: break-word;
+      overflow-wrap: anywhere;
+      max-width: 100%;
+    }
+    .products-time{
+      font-size:12px;
+      color:#555;
+      text-align:left;
+    }
+
+    /* カートボタン（商品一覧ヘッダー右） */
+    .cart-toggle{
+      flex:0 0 auto;
+      width:38px;
+      height:38px;
+      border-radius:10px;
+      border:1px solid #4a7bbf;
+      background:rgba(255,255,255,.75);
+      cursor:pointer;
+      font-size:20px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      box-shadow:none;
+    }
+    .cart-toggle:active{
+      transform: translateY(1px);
+    }
+/* カートモーダル */
+    .cart-modal {
+      position:absolute;
+      top:50%;
+      left:50%;
+      transform:translate(-50%,-50%);
+      width:86%;
+      max-width:320px;
+      background:#e5e5e5;
+      border-radius:6px;
+      padding:14px 18px 20px;
+      box-shadow:0 8px 20px rgba(0,0,0,.3);
+      z-index:20;
+      display:none;
+    }
+    .cart-modal.open { display:block; }
+
+    .cart-modal-header {
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      margin-bottom:10px;
+    }
+    .cart-title {
+      font-weight:700;
+      font-size:18px;
+    }
+    .cart-header-right {
+      display:flex;
+      align-items:center;
+      gap:8px;
+      font-size:16px;
+    }
+    .cart-close {
+      cursor:pointer;
+      font-size:18px;
+    }
+
+    .cart-items {
+      margin-top:8px;
+      line-height:1.6;
+      min-height:40px;
+      font-size:14px;
+    }
+
+    .cart-sides {
+      margin-top:12px;
+      font-size:13px;
+      line-height:1.5;
+    }
+
+    .side-row {
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      margin-top:4px;
+    }
+    .side-name { flex:1; }
+
+    .side-qty {
+      display:flex;
+      align-items:center;
+    }
+    .side-qty button {
+      width:26px;
+      height:24px;
+      border:1px solid #666;
+      background:#fff;
+      cursor:pointer;
+    }
+    .side-num {
+      width:26px;
+      text-align:center;
+      border-top:1px solid #666;
+      border-bottom:1px solid #666;
+      line-height:24px;
+    }
+
+    #sideRemaining {
+      margin:4px 0 6px;
+      font-size:12px;
+    }
+
+    .pickup-box {
+      margin-top:10px;
+      font-size:13px;
+    }
+    .pickup-box label {
+      display:block;
+      margin-top:4px;
+    }
+
+    .orders-box {
+      height:380px;
+      overflow-y:auto;
+      background:#e5e5e5;
+    }
+
+    .order-item {
+      font-size:13px;
+      padding-bottom:8px;
+      margin-bottom:8px;
+      border-bottom:1px solid #bbb;
+    }
+    .order-time { font-weight:600; margin-bottom:4px; }
+
+    #searchResultMsg {
+      font-size:12px;
+      margin:4px 0 0;
+      color:#333;
+    }
+
+    /* 初期化ボタン */
+    .reset-container {
+      position:absolute;
+      right:20px;
+      bottom:20px;
+    }
+    .reset-btn {
+      font-size:11px;
+      padding:6px 10px;
+      border-radius:6px;
+      border:1px solid #888;
+      background:#fff;
+      color:#cc0000;
+      cursor:pointer;
+    }
+    .reset-btn:hover { background:#ffecec; }
+  
+    html, body, .phone-shell, .app-main, .screen, #products { overflow-x: hidden !important; }
+.side-info{
+      margin-top:18px;
+      padding:12px 14px;
+      border:2px solid #4b81d6;
+      border-radius:8px;
+      background:#d9ecff;
+      font-size:12px;
+      white-space: normal;
+      overflow: visible;
+      text-overflow: clip;
+    }
+    .side-title{ font-weight:700; margin-bottom:6px; }
+    .side-list{ margin:0; padding-left:18px; }
+    .side-list li{ margin:2px 0; }
+
+    /* スクロールバー見た目（白い帯を消す） */
+    .app-main::-webkit-scrollbar{ width:10px; }
+    .app-main::-webkit-scrollbar-track{ background:transparent; }
+    .app-main::-webkit-scrollbar-thumb{
+      background: rgba(0,0,0,0.35);
+      border-radius: 10px;
+    }
+
+  </style>
+</head>
+<body>
+  <div class="phone-shell">
+    <header class="app-header">
+      <div class="search-wrapper">
+        <input type="search" class="search-input" placeholder=" キーワードを検索" />
+        <span class="search-icon">🔍</span>
+      </div>
+      <div class="menu-icon" id="menuBtn">
+        <span></span><span></span><span></span>
+      </div>
+    </header>
+
+    
+    <div class="nav-overlay" id="navOverlay">
+      <div class="nav-close" id="navClose">×</div>
+      <button class="oval-btn nav-link" data-screen="home">HOME</button>
+      <button class="oval-btn nav-link" data-screen="news">お知らせ</button>
+      <button class="oval-btn nav-link" data-screen="products">商品一覧</button>
+      <button class="oval-btn nav-link" data-screen="orders">注文履歴</button>
+      <button class="oval-btn nav-link" data-screen="howto">操作方法</button>
+    </div>
+
+    <main class="app-main no-scroll">
+      
+      <section class="screen active" id="home">
+        <div class="icon-placeholder">
+          <img src="/static/img/campuscart.png"
+               alt="CampusCart ロゴ">
+        </div>
+
+        <h1 class="app-title">Campus Cart</h1>
+
+        <p class="catchcopy">
+          購買をもっと便利に<br>もっと画期的に
+        </p>
+
+        <button class="rect-btn" id="goReserve">予約注文</button>
+
+        <div class="reset-container">
+          <button type="button" class="reset-btn" id="resetBtn">初期化</button>
+        </div>
+      </section>
+
+      
+      <section class="screen" id="reserve">
+        <h2 class="section-title" style="margin-bottom:18px;">
+          学年・組・席を選んでください
+        </h2>
+
+        <div class="border-box">
+          <p style="margin-top:0;">例）1年3組12席</p>
+          <div class="grade-row">
+            <select id="gradeSelect" class="grade-select">
+              <option value="">学年</option>
+              <option value="1年">1年</option>
+              <option value="2年">2年</option>
+              <option value="3年">3年</option>
+            </select>
+            <select id="classSelect" class="grade-select">
+              <option value="">組</option>
+              <option value="1組">1組</option>
+              <option value="2組">2組</option>
+              <option value="3組">3組</option>
+              <option value="4組">4組</option>
+            </select>
+            <select id="seatSelect" class="grade-select">
+              <option value="">席</option>
+            </select>
+          </div>
+<p style="margin:12px 0 6px;">名前を入力してください。<br>例）山田 太郎</p>
+          <input type="text" id="nameInput" class="input-line"
+                 placeholder="例）山田 太郎">
+
+          <div style="text-align:center;">
+            <button class="oval-btn" id="createAccount">作成</button>
+          </div>
+        </div>
+        <p id="reserveMsg" style="margin-top:12px;font-size:14px;"></p>
+      </section>
+
+      
+      <section class="screen" id="phone">
+        <div class="icon-placeholder">
+          <img src="/static/img/campuscart.png"
+               alt="CampusCart ロゴ">
+        </div>
+
+        <h1 class="app-title">Campus Cart</h1>
+        <p class="catchcopy">
+          購買をもっと便利に<br>もっと画期的に
+        </p>
+
+        <p id="userInfo" style="font-size:14px;margin-bottom:16px;"></p>
+
+        <input type="tel" id="phoneInput" class="input-line"
+               style="max-width:260px;"
+               placeholder="電話番号を入力してください">
+        <button class="oval-btn" id="phoneRegister">☎ 電話番号登録</button>
+        <p id="phoneMsg" style="margin-top:12px;font-size:14px;"></p>
+      </section>
+
+      
+      <section class="screen" id="products">
+        <div class="products-topbar">
+          <div class="products-topbar-row1">
+            <div class="products-title">商品一覧</div>
+            <button type="button" class="cart-toggle" id="cartToggle" aria-label="カートを開く">🛒</button>
+          </div>
+          <div class="products-prices">お弁当 <b>460円</b> / 週替わり弁当 <b>460円</b><br>日替わり弁当 <b>610円</b></div>
+          <div class="products-time">注文受付時間：8:00〜13:00</div>
+        </div>
+        <p id="searchResultMsg"></p>
+
+        
+        <div class="product-grid">
+          <div class="product-card" data-name="唐揚げ弁当">
+            <div class="badge">人気 No.1</div>
+            <div class="product-img"><img src="/static/img/staticimgebihuraitosiramisakanahurai.jpg" alt="唐揚げ弁当"></div>
+            <div>唐揚げ弁当</div>
+            <div class="price">460円</div>
+
+            <div class="select-control">
+              <label class="check-wrap">
+                <input type="checkbox" class="bento-check">
+                <span>選ぶ</span>
+              </label>
+            </div>
+          </div>
+
+          <div class="product-card" data-name="チキンカツ弁当">
+            <div class="product-img"><img src="/static/img/staticimgtikinnkatu.jpg" alt="チキンカツ弁当"></div>
+            <div>チキンカツ弁当</div>
+            <div class="price">460円</div>
+
+            <div class="select-control">
+              <label class="check-wrap">
+                <input type="checkbox" class="bento-check">
+                <span>選ぶ</span>
+              </label>
+            </div>
+          </div>
+
+          <div class="product-card" data-name="焼き肉とクリームコロッケ弁当">
+            <div class="product-img"><img src="/static/img/staticimgyakinikutokuri-mukorokke.jpg" alt="焼き肉とクリームコロッケ弁当"></div>
+            <div style="font-size:12px;">焼き肉と<br>クリームコロッケ弁当</div>
+            <div class="price">460円</div>
+
+            <div class="select-control">
+              <label class="check-wrap">
+                <input type="checkbox" class="bento-check">
+                <span>選ぶ</span>
+              </label>
+            </div>
+          </div>
+
+          <div class="product-card" data-name="エビフライと白身魚フライ弁当">
+            <div class="product-img"><img src="/static/img/staticimgkaraage.jpg" alt="エビフライと白身魚フライ弁当"></div>
+            <div style="font-size:12px;">エビフライと<br>白身魚フライ弁当</div>
+            <div class="price">460円</div>
+
+            <div class="select-control">
+              <label class="check-wrap">
+                <input type="checkbox" class="bento-check">
+                <span>選ぶ</span>
+              </label>
+            </div>
+          </div>
+
+          
+          
+          
+          <div class="product-card" data-name="週替わり弁当">
+            <div class="product-img"><img src="/static/img/campuscart.png" alt="週替わり弁当"></div>
+
+          
+            <div>週替わり弁当</div>
+
+          
+            <div class="price">460円</div>
+
+
+          
+            <div class="select-control">
+
+          
+            <label class="check-wrap">
+
+          
+            <input type="checkbox" class="bento-check">
+
+          
+            <span>選ぶ</span>
+
+          
+            </label>
+
+          
+            </div>
+
+          
+            </div>
+
+<div class="product-card" data-name="日替わり弁当">
+            <div class="product-img"><img src="/static/img/campuscart.png" alt="日替わり弁当"></div>
+            <div>日替わり弁当</div>
+            <div class="price">610円</div>
+
+            <div class="select-control">
+              <label class="check-wrap">
+                <input type="checkbox" class="bento-check">
+                <span>選ぶ</span>
+              </label>
+            </div>
+          </div>
+
+
+
+        </div>
+
+        <div class="side-info">
+          <div class="side-title">＋1品（おかず追加）</div>
+          <ul class="side-list">
+            <li>鶏のから揚げ（2ヶ）</li>
+            <li>サバの煮つけ</li>
+            <li>白身魚フライ</li>
+            <li>シューマイ</li>
+            <li>エビと枝豆のしんじょ天</li>
+          </ul>
+        </div>
+
+
+        
+        <div class="cart-modal" id="cartModal">
+          <div class="cart-modal-header">
+            <div class="cart-title">カート</div>
+            <div class="cart-header-right">
+              <span>🛒</span>
+              <span class="cart-close" id="cartClose">×</span>
+            </div>
+          </div>
+
+          <div id="cartItems" class="cart-items">
+            まだ商品が入っていません
+          </div>
+
+          <div class="cart-sides">
+            <p style="margin:8px 0 0;">＋１品（おかず）</p>
+            <p id="sideRemaining">残り：0品</p>
+
+
+            <div class="side-row" data-side="鶏のから揚げ（2ヶ）">
+              <span class="side-name">鶏のから揚げ（2ヶ）</span>
+              <div class="side-qty">
+                <button class="side-minus">－</button>
+                <span class="side-num">0</span>
+                <button class="side-plus">＋</button>
+              </div>
+            </div>
+
+            <div class="side-row" data-side="サバの煮つけ">
+              <span class="side-name">サバの煮つけ</span>
+              <div class="side-qty">
+                <button class="side-minus">－</button>
+                <span class="side-num">0</span>
+                <button class="side-plus">＋</button>
+              </div>
+            </div>
+
+            <div class="side-row" data-side="白身魚フライ">
+              <span class="side-name">白身魚フライ</span>
+              <div class="side-qty">
+                <button class="side-minus">－</button>
+                <span class="side-num">0</span>
+                <button class="side-plus">＋</button>
+              </div>
+            </div>
+
+            <div class="side-row" data-side="シューマイ">
+              <span class="side-name">シューマイ</span>
+              <div class="side-qty">
+                <button class="side-minus">－</button>
+                <span class="side-num">0</span>
+                <button class="side-plus">＋</button>
+              </div>
+            </div>
+
+            <div class="side-row" data-side="エビと枝豆のしんじょ天">
+              <span class="side-name">エビと枝豆のしんじょ天</span>
+              <div class="side-qty">
+                <button class="side-minus">－</button>
+                <span class="side-num">0</span>
+                <button class="side-plus">＋</button>
+              </div>
+            </div>
+
+          
+          </div>
+
+          <div class="pickup-box">
+            <p>受け取り時間を選択してください</p>
+            <label><input type="radio" name="pickupTime" value="12:50" checked> 12:50</label>
+            <label><input type="radio" name="pickupTime" value="13:00"> 13:00</label>
+          </div>
+
+          <button class="oval-btn" id="purchaseBtn"
+                  style="margin-top:12px;">購入する</button>
+        </div>
+      </section>
+
+      
+      <section class="screen" id="orders">
+        <h2 class="section-title">- 注文履歴 -</h2>
+        <div id="ordersList" class="border-box orders-box">
+          注文履歴はまだありません
+        </div>
+      </section>
+
+      
+      <section class="screen" id="howto">
+        <h2 class="section-title">- 操作方法 -</h2>
+        <div class="border-box">
+          <p>① HOME画面の「予約注文」から、学年クラス・名前・電話番号を登録してください。</p>
+          <p>② メニューから「商品一覧」を選び、お弁当の数量を ＋／－ ボタンで変更してください。</p>
+          <p>③ 右上のカートを開き、＋１品（おかず）の個数を決めて「購入する」を押してください。（ダミー）</p>
+          <p>④ 購入時に受け取り時間（12:50 または 13:00）を選択してください。</p>
+          <p>⑤ 「注文履歴」から過去の注文内容と受け取り時間を確認できます。</p>
+        </div>
+      </section>
+
+      
+      <section class="screen" id="news">
+        <h2 class="section-title">- お知らせ -</h2>
+        <p>お知らせはまだありません。</p>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    // ▼GASの保存先URL（/exec）をここで管理します
+    // 初回だけURL入力→以後は端末に保存されます（localStorage）
+    const GAS_URL_KEY = "campusCartGASUrl";
+    // ▼固定：このHTMLは指定のGAS /exec を自動設定します
+    const __DESIRED_GAS_URL__ = "https://script.google.com/macros/s/AKfycbxI0NbVrSYQVfKgyhN-mEGYIb9X6UeyvnFNJtDX1QS0JuAmTxThRWr89fxu3SeLhWk/exec";
+    if (localStorage.getItem(GAS_URL_KEY) !== __DESIRED_GAS_URL__) {
+      localStorage.setItem(GAS_URL_KEY, __DESIRED_GAS_URL__);
+      // 1回だけ再読み込みして確実に反映
+      location.reload();
+    }
+
+    const DEFAULT_SHEET_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbx8zxFNi-2ToA5wdtjYlhNGlBgDhV1pJA8Nhl8tyhSRg_8P3cSLeDafWtgXwUKPKGV6/exec";
+    let SHEET_WEBAPP_URL = localStorage.getItem(GAS_URL_KEY) || DEFAULT_SHEET_WEBAPP_URL;
+
+    if (!localStorage.getItem(GAS_URL_KEY)) {
+      const u = prompt("注文記録用のGAS /exec URL を貼ってください（一度だけ）", DEFAULT_SHEET_WEBAPP_URL);
+      if (u && u.includes("/exec")) {
+        SHEET_WEBAPP_URL = u.trim();
+        localStorage.setItem(GAS_URL_KEY, SHEET_WEBAPP_URL);
+        alert("保存しました。次回から自動で使われます。");
+      } else {
+        alert("URLが空/不正です。記録できない場合はページを再読み込みしてURLを貼ってください。");
+      }
+    }
+
+    // 後から変更したい時（Chromeのコンソールで実行）
+    // setGASUrl("https://script.google.com/macros/s/....../exec")
+    window.setGASUrl = (u) => {
+      if (!u || !String(u).includes("/exec")) return alert("不正なURL");
+      localStorage.setItem(GAS_URL_KEY, String(u).trim());
+      alert("保存しました。ページを更新してください。");
+    };
+
+
+const USER_KEY = "campusCartUser";
+    const ORDERS_KEY = "campusCartOrders";
+
+    const SEARCH_KEYWORD_MAP = {
+      "からあげ":"唐揚げ弁当","唐揚げ":"唐揚げ弁当","唐揚げ弁当":"唐揚げ弁当","から揚げ":"唐揚げ弁当",
+      "チキン":"チキンカツ弁当","カツ":"チキンカツ弁当","チキンカツ":"チキンカツ弁当",
+      "エビ":"エビフライとソーセージカツ弁当","海老":"エビフライとソーセージカツ弁当","ソーセージ":"エビフライとソーセージカツ弁当",
+      "焼き肉":"焼き肉とクリームコロッケ弁当","コロッケ":"焼き肉とクリームコロッケ弁当",
+      "日替わり":"日替わり弁当","ひがわり":"日替わり弁当"
+    };
+
+    let userData = {};
+    let orders = [];
+    let userRegistered = false;
+    let menuBtn, searchInput;
+    let cartToggle, cartModal;
+
+    const normalize = s => s.replace(/\s+/g,"").toLowerCase();
+
+    const showScreen = id => {
+      document.querySelectorAll(".screen").forEach(s =>
+        s.classList.toggle("active", s.id === id)
+      );
+      const mainEl = document.querySelector(".app-main");
+      mainEl.scrollTop = 0;
+      mainEl.classList.toggle("no-scroll", ["home","reserve","phone"].includes(id));
+    };
+
+    const loadJson = (key, def) => {
+      try {
+        const raw = localStorage.getItem(key);
+        return raw ? JSON.parse(raw) : def;
+      } catch { return def; }
+    };
+
+    const saveJson = (key, val) =>
+      localStorage.setItem(key, JSON.stringify(val));
+
+    const renderOrders = () => {
+      const listEl = document.getElementById("ordersList");
+      if (!orders.length) {
+        listEl.textContent = "注文履歴はまだありません";
+        return;
+      }
+      const rev = orders.slice().reverse();
+      listEl.innerHTML = rev.map((o,i) => {
+        const n = rev.length - i;
+        const itemLines = o.items.map(v=>`${v.name} × ${v.qty}`).join("<br>");
+        const sideLines = o.sides && o.sides.length
+          ? "＋１品：" + o.sides.map(v=>`${v.name} × ${v.qty}`).join("、")
+          : "";
+        return `
+          <div class="order-item">
+            <div class="order-time">注文${n}：${o.time}${o.canceled ? "（キャンセル済み）" : ""}</div>
+            <div>受け取り時間：${o.pickup}</div>
+            <div>${itemLines}</div>
+            ${sideLines ? `<div>${sideLines}</div>` : ""}
+            <div class="order-actions">
+              ${o.canceled
+                ? `<span class="canceled-label">キャンセル済み${o.canceledAt ? "：" + o.canceledAt : ""}</span>`
+                : `<button type="button" class="cancel-order" data-id="${o.id}">キャンセル</button>`}
+            </div>
+          </div>`;
+      }).join("");
+    };
+
+    const canCancelOrder = (o) => true;
+
+    const cancelOrderById = (id) => {
+      const idx = orders.findIndex(o=>o.id===id);
+      if (idx < 0) return;
+      const o = orders[idx];
+      if (o.canceled) return;
+
+      if (!canCancelOrder(o)) {
+        alert("この注文はキャンセルできません。");
+        return;
+      }
+      if (!confirm("この注文をキャンセルしますか？")) return;
+
+      const canceledAt = new Date().toLocaleString("ja-JP");
+      o.canceled = true;
+      o.canceledAt = canceledAt;
+      saveJson(ORDERS_KEY, orders);
+      renderOrders();
+
+      const payload = {
+        action: "cancel",
+        op: "strike",
+        orderId: o.id,
+        time: o.time,
+        grade: userData.grade || "",
+        seat: userData.seat  || "",
+        name: userData.name  || "",
+        phone: userData.phone || "",
+        pickup: o.pickup,
+        items: o.items || [],
+        sides: o.sides || [],
+        canceledAt
+      };
+      fetch(SHEET_WEBAPP_URL, {
+        method: "POST",
+        mode: "no-cors",
+          keepalive: true,
+        body: JSON.stringify(payload)
+      });
+
+      alert("注文をキャンセルしました。");
+    };
+
+    const applyUserDataToUI = () => {
+      const phoneInput = document.getElementById("phoneInput");
+      const userInfo = document.getElementById("userInfo");
+      if (userData.phone && phoneInput) phoneInput.value = userData.phone;
+      if (userInfo && userData.grade && userData.name) {
+        const seat = userData.seat ? `${userData.seat}席` : "";
+        userInfo.textContent = `${userData.grade}${seat}：${userData.name}さん`;
+      }
+    };
+
+    const enableUI = () => {
+      userRegistered = true;
+      menuBtn.classList.remove("disabled");
+      searchInput.classList.remove("disabled");
+      searchInput.disabled = false;
+      document.querySelectorAll(".nav-link").forEach(b=>b.classList.remove("disabled"));
+    };
+
+    const disableUI = () => {
+      userRegistered = false;
+      menuBtn.classList.add("disabled");
+      searchInput.classList.add("disabled");
+      searchInput.disabled = true;
+      document.querySelectorAll(".nav-link").forEach(b=>b.classList.add("disabled"));
+    };
+
+    const getCartSummary = () => {
+      const items = [];
+      document.querySelectorAll(".product-card").forEach(card => {
+        const chk = card.querySelector(".bento-check");
+        if (!chk || !chk.checked) return;
+
+        let name = card.dataset.name || "";
+        const v = card.querySelector(".variant-select");
+        if (v && !v.disabled && v.value) {
+          name = `${name}（${v.value}）`;
+        }
+        items.push({ name, qty: 1 });
+      });
+      return items;
+    };
+    const getTotalBentoQty = () =>
+      getCartSummary().reduce((s,v)=>s+v.qty,0);
+
+    const getSideSummary = () => {
+      const list = [];
+      document.querySelectorAll(".side-row").forEach(row => {
+        const qty = parseInt(row.querySelector(".side-num").textContent || "0", 10) || 0;
+        if (qty>0) list.push({ name: row.dataset.side, qty });
+      });
+      return list;
+    };
+    const getTotalSideQty = () =>
+      getSideSummary().reduce((s,v)=>s+v.qty,0);
+
+    const updateSideRemaining = () => {
+      const remain = Math.max(getTotalBentoQty()-getTotalSideQty(),0);
+      document.getElementById("sideRemaining").textContent =
+        `残り：${remain}品`;
+    };
+
+    const updateCartItems = () => {
+      const el = document.getElementById("cartItems");
+      const items = getCartSummary();
+      if (!items.length) {
+        el.textContent = "まだ商品が入っていません";
+        updateSideRemaining();
+        return;
+      }
+      el.innerHTML = items.map(v=>`${v.name} × ${v.qty}`).join("<br>");
+      updateSideRemaining();
+    };
+
+    const resetQuantities = () => {
+      document.querySelectorAll(".bento-check").forEach(c=>c.checked=false);
+      document.querySelectorAll(".side-row .side-num").forEach(s=>s.textContent="0");
+      updateCartItems();
+      updateSideRemaining();
+    };
+
+    const filterProductsBySearch = () => {
+      const raw = searchInput.value.trim();
+      if (!userRegistered) {
+        if (raw) alert("先に予約情報を入力してください。");
+        return;
+      }
+      const q = normalize(raw);
+      const cards = document.querySelectorAll(".product-card");
+      const msgEl = document.getElementById("searchResultMsg");
+      showScreen("products");
+      if (!q) {
+        cards.forEach(c=>c.style.display="block");
+        msgEl.textContent = "";
+        return;
+      }
+      const mapped = SEARCH_KEYWORD_MAP[raw] || SEARCH_KEYWORD_MAP[q] || null;
+      let hit = 0;
+      cards.forEach(card => {
+        const name = normalize(card.dataset.name || "");
+        const match = mapped ? card.dataset.name===mapped : name.includes(q);
+        card.style.display = match ? "block" : "none";
+        if (match) hit++;
+      });
+      msgEl.textContent = hit
+        ? `「${raw}」の検索結果：${hit}件`
+        : `「${raw}」に該当する商品はありません`;
+    };
+
+    const resetApp = () => {
+      if (!confirm(
+        "アプリを初期化します。\n\n" +
+        "・学年クラス\n・名前\n・電話番号\n・注文履歴\n\n" +
+        "が全て削除されます。よろしいですか？"
+      )) return;
+
+      localStorage.removeItem(USER_KEY);
+      localStorage.removeItem(ORDERS_KEY);
+      userData = {};
+      orders = [];
+      renderOrders();
+      disableUI();
+
+      ["gradeSelect","classSelect","seatSelect","nameInput","phoneInput"].forEach(id=>{
+        const el=document.getElementById(id);
+        if(el) el.value="";
+      });
+      document.getElementById("userInfo").textContent="";
+      document.getElementById("reserveMsg").textContent="";
+      document.getElementById("phoneMsg").textContent="";
+      searchInput.value="";
+      document.getElementById("searchResultMsg").textContent="";
+      resetQuantities();
+      showScreen("home");
+    };
+
+    document.addEventListener("DOMContentLoaded", () => {
+      try {
+        localStorage.setItem("__test","1");
+        localStorage.removeItem("__test");
+      } catch {
+        alert("このブラウザでは情報を保存できません。");
+      }
+
+      menuBtn = document.getElementById("menuBtn");
+      searchInput = document.querySelector(".search-input");
+      const navOverlay = document.getElementById("navOverlay");
+      const navClose = document.getElementById("navClose");
+      cartToggle = document.getElementById("cartToggle");
+      cartModal  = document.getElementById("cartModal");
+      const cartClose = document.getElementById("cartClose");
+      const purchaseBtn = document.getElementById("purchaseBtn");
+
+      
+      // 席番号セレクト（1〜45）を生成
+      const seatSel = document.getElementById("seatSelect");
+      if (seatSel && seatSel.options.length <= 1) {
+        for (let i = 1; i <= 45; i++) {
+          const opt = document.createElement("option");
+          opt.value = String(i);
+          opt.textContent = String(i);
+          seatSel.appendChild(opt);
+        }
+      }
+
+      userData = loadJson(USER_KEY,{});
+      orders  = loadJson(ORDERS_KEY,[]);
+      orders = orders.map((o,idx)=>{
+        if (!o.id) o.id = `o_${Date.now()}_${idx}`;
+        if (o.canceled === undefined) o.canceled = false;
+        return o;
+      });
+      saveJson(ORDERS_KEY, orders);
+      renderOrders();
+
+      document.getElementById("ordersList").addEventListener("click",(e)=>{
+        const btn = e.target.closest(".cancel-order");
+        if (!btn) return;
+        cancelOrderById(btn.dataset.id);
+      });
+
+      if (userData.grade && userData.name && userData.phone) enableUI();
+      else disableUI();
+
+      applyUserDataToUI();
+      showScreen("home");
+
+      menuBtn.addEventListener("click", ()=>{
+        if (!userRegistered) return;
+        navOverlay.classList.add("open");
+      });
+      navClose.addEventListener("click", ()=>navOverlay.classList.remove("open"));
+      document.querySelectorAll(".nav-link").forEach(btn=>{
+        btn.addEventListener("click", ()=>{
+          if (!userRegistered) return;
+          showScreen(btn.dataset.screen);
+          navOverlay.classList.remove("open");
+        });
+      });
+
+      document.getElementById("goReserve").addEventListener("click", ()=>
+        showScreen("reserve")
+      );
+
+      document.getElementById("createAccount").addEventListener("click",()=>{
+        const grade = document.getElementById("gradeSelect").value;
+        const clss  = document.getElementById("classSelect").value;
+        const seatRaw = document.getElementById("seatSelect").value;
+        const name  = document.getElementById("nameInput").value.trim();
+        const msg   = document.getElementById("reserveMsg");
+
+        const seat = parseInt(String(seatRaw || "").trim(), 10);
+
+        if (!grade || !clss || !seatRaw || !name) {
+          msg.textContent = "学年・クラス・席番号・名前をすべて入力してください。";
+          return;
+        }
+        if (!Number.isInteger(seat) || seat < 1 || seat > 45) {
+          msg.textContent = "席番号は1〜45の数字で入力してください。";
+          return;
+        }
+
+        userData.grade = grade + clss;
+        userData.seat  = seat;
+        userData.name  = name;
+        saveJson(USER_KEY,userData);
+        applyUserDataToUI();
+        msg.textContent = `${userData.grade}${seat}席：${name}さんの情報を作成しました。（イメージ）`;
+        showScreen("phone");
+      });
+
+      document.getElementById("phoneRegister").addEventListener("click",()=>{
+        const raw = document.getElementById("phoneInput").value.trim();
+        const msg = document.getElementById("phoneMsg");
+        if (!raw) {
+          msg.textContent = "電話番号を入力してください。";
+          return;
+        }
+        const phone = raw.replace(/\s+/g,"");
+        if (!/^[0-9]+$/.test(phone)) {
+          msg.textContent = "電話番号は数字だけで入力してください。";
+          return;
+        }
+        userData.phone = phone;
+        saveJson(USER_KEY,userData);
+        applyUserDataToUI();
+        msg.textContent = `電話番号「${phone}」を登録しました。`;
+        enableUI();
+      });
+
+      cartToggle.addEventListener("click",()=>{
+        if (!userRegistered) {
+          alert("先に予約情報を入力してください。");
+          return;
+        }
+        updateCartItems();
+        cartModal.classList.add("open");
+      });
+      cartClose.addEventListener("click",()=>
+        cartModal.classList.remove("open")
+      );
+
+      document.querySelectorAll(".bento-check").forEach(chk=>{
+        chk.addEventListener("change", ()=>{
+          const card = chk.closest(".product-card");
+          const v = card ? card.querySelector(".variant-select") : null;
+          if (v) v.disabled = !chk.checked;
+          updateCartItems();
+        });
+      });
+      document.querySelectorAll(".variant-select").forEach(sel=>{
+        sel.addEventListener("change", updateCartItems);
+      });
+
+      document.querySelectorAll(".side-row").forEach(row=>{
+        const minus = row.querySelector(".side-minus");
+        const plus  = row.querySelector(".side-plus");
+        const numSpan = row.querySelector(".side-num");
+        let num = parseInt(numSpan.textContent||"0",10)||0;
+        minus.addEventListener("click",()=>{
+          num=Math.max(0,num-1);
+          numSpan.textContent=num;
+          updateSideRemaining();
+        });
+        plus.addEventListener("click",()=>{
+          const bentoTotal=getTotalBentoQty();
+          const sideTotal=getTotalSideQty();
+          if (!bentoTotal) { alert("まずお弁当をカートに入れてください。"); return; }
+          if (sideTotal>=bentoTotal) { alert("おかずの合計は弁当の個数までです。"); return; }
+          num++;
+          numSpan.textContent=num;
+          updateSideRemaining();
+        });
+      });
+
+      updateCartItems();
+      updateSideRemaining();
+
+      purchaseBtn.addEventListener("click",()=>{
+        if (!userRegistered) {
+          alert("購入前に、学年クラス・名前・電話番号の登録が必要です。");
+          showScreen((userData.grade && userData.name) ? "phone" : "reserve");
+          return;
+        }
+        const now = new Date();
+        // デバッグ用：時間制限を一時的に無効化（いつでも購入可能）
+        const items = getCartSummary();
+        if (!items.length) {
+          alert("商品がカートに入っていません。");
+          return;
+        }
+        const sides = getSideSummary();
+        const bentoTotal = getTotalBentoQty();
+        const sideTotal  = getTotalSideQty();
+        if (sideTotal>bentoTotal) {
+          alert("おかずの合計は弁当の個数までにしてください。");
+          return;
+        }
+        if (!sideTotal && bentoTotal>0) {
+          if (!confirm("＋１品のおかずが選ばれていません。\n本当におかずなしでよろしいですか？")) {
+            return;
+          }
+        }
+        const pickupRadio = document.querySelector('input[name="pickupTime"]:checked');
+        const pickup = pickupRadio ? pickupRadio.value : "12:50";
+
+        const lines = items.map(v=>`${v.name} × ${v.qty}`).join("\n");
+        const sideLines = sides.map(v=>`${v.name} × ${v.qty}`).join("\n");
+
+        const timeStr = now.toLocaleString("ja-JP");
+        const orderId = "o_" + now.getTime();
+
+        // スプレッドシートに送るデータ
+        const payload = {
+          action: "order",
+          orderId,
+          time:  timeStr,
+          grade: userData.grade || "",
+          seat:  userData.seat  || "",
+          name:  userData.name  || "",
+          phone: userData.phone || "",
+          pickup,
+          items,
+          sides
+        };
+
+        // Google Apps Script の Web アプリに送信
+        fetch(SHEET_WEBAPP_URL, {
+          method: "POST",
+          mode: "no-cors",
+          keepalive: true,
+          body: JSON.stringify(payload)
+        });
+
+        alert(
+          "以下の内容で注文しました。\n\n" +
+          `受け取り時間：${pickup}\n\n` +
+          lines +
+          (sideLines ? "\n\n＋１品：\n"+sideLines : "")
+        );
+
+        orders.push({ id:orderId, time:timeStr, pickup, items, sides, canceled:false });
+        saveJson(ORDERS_KEY, orders);
+        renderOrders();
+
+        resetQuantities();
+        cartModal.classList.remove("open");
+      });
+
+      searchInput.addEventListener("keydown",e=>{
+        if (e.key==="Enter") {
+          e.preventDefault();
+          filterProductsBySearch();
+        }
+      });
+      searchInput.addEventListener("input",()=>{
+        if (!searchInput.value.trim()) {
+          document.querySelectorAll(".product-card")
+            .forEach(c=>c.style.display="block");
+          document.getElementById("searchResultMsg").textContent="";
+        }
+      });
+
+      document.getElementById("resetBtn").addEventListener("click", resetApp);
+    });
+  </script>
+</body>
+</html>
